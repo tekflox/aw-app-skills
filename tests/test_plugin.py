@@ -144,13 +144,14 @@ def test_materializer_watchdog_tick_survives_sync_tick_raising():
         asyncio.run(tick_fn())  # must not raise
 
 
-def test_list_skill_sources_names_the_materialized_dir():
+def test_list_skill_sources_names_the_materialized_dir(tmp_path):
     ctx = _make_ctx()
     plugin = SkillsAppPlugin()
 
-    result = asyncio.run(plugin.list_skill_sources(ctx))
+    with patch.object(materializer, "data_dir", return_value=tmp_path):
+        result = asyncio.run(plugin.list_skill_sources(ctx))
 
-    assert result == {"ok": True, "dirs": [str(materializer.materialized_dir())]}
+    assert result == {"ok": True, "dirs": [str(tmp_path / materializer.CACHE_DIRNAME)]}
 
 
 def test_on_config_saved_refreshes_live_config():
