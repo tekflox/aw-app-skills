@@ -2,8 +2,8 @@
   "manifest_version": 1,
   "id": "skills",
   "name": "Skills Connector",
-  "version": "0.1.0",
-  "description": "MCP connector for skills.aw (fredericowu/aw-skills), the standalone skill registry service — search, load, create and update versioned skills over its REST API. Install it and any agent on this workspace can read and write skills that live in that registry (public or private to this workspace) instead of only the ones in this workspace's own local tree.",
+  "version": "0.2.0",
+  "description": "MCP connector for skills.aw (fredericowu/aw-skills), the standalone skill registry service \u2014 search, load, create and update versioned skills over its REST API. Install it and any agent on this workspace can read and write skills that live in that registry (public or private to this workspace) instead of only the ones in this workspace's own local tree.",
   "icon": "book-open",
   "tier": "inprocess",
   "requires_ui_refresh": true,
@@ -36,7 +36,7 @@
       {
         "id": "aw-app-skills",
         "path": "skills/aw-app-skills/SKILL.md",
-        "description": "How to use the 4 MCP tools this app exposes for skills.aw (search_skills, load_skill, create_skill, update_skill) — and how they differ from the kb app's same-named tools."
+        "description": "How to use the 4 MCP tools this app exposes for skills.aw (search_skills, load_skill, create_skill, update_skill) \u2014 and how they differ from the kb app's same-named tools."
       }
     ],
     "windows": [
@@ -73,14 +73,14 @@
         "type": "string",
         "default": "https://skills.aw.tekflox.com",
         "title": "skills.aw base URL",
-        "description": "The aw-skills deployment this connector talks to. Only change this to point at a different aw-skills instance — the default is the one, shared skills.aw deployment (its own port is :10016; this is the public hostname in front of it)."
+        "description": "The aw-skills deployment this connector talks to. Only change this to point at a different aw-skills instance \u2014 the default is the one, shared skills.aw deployment (its own port is :10016; this is the public hostname in front of it)."
       },
       "identity_token": {
         "type": "string",
         "x-secret": true,
         "default": "",
         "title": "Identity token (auto-managed)",
-        "description": "A per-workspace identity JWT this connector mints and refreshes against aw-backend itself (identity_token.py) — there is nothing to paste here. Shown only because it is stored like any other config value; editing it by hand is pointless, the next watchdog tick (hourly) overwrites it once it is within half its lifetime of expiring."
+        "description": "A per-workspace identity JWT this connector mints and refreshes against aw-backend itself (identity_token.py) \u2014 there is nothing to paste here. Shown only because it is stored like any other config value; editing it by hand is pointless, the next watchdog tick (hourly) overwrites it once it is within half its lifetime of expiring."
       }
     },
     "required": []
