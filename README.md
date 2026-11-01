@@ -41,7 +41,9 @@ refreshes its own (`skills_app/identity_token.py`, same two-hop
 mint-then-persist shape `agents_platform_runners_app` already uses for its
 `agents_platform_token`), on an hourly watchdog tick. There is nothing to
 paste into Settings; the only user-facing config field is `base_url`
-(defaults to the public `https://skills.aw.tekflox.com`).
+(defaults to `http://aw-skills:10016` — a container **name** on
+`aw-stack-net`, same pattern as the Knowledgeable Connector's own
+`base_url`, not the public hostname).
 
 ## Out of scope for this phase
 

@@ -71,9 +71,9 @@
     "properties": {
       "base_url": {
         "type": "string",
-        "default": "https://skills.aw.tekflox.com",
+        "default": "http://aw-skills:10016",
         "title": "skills.aw base URL",
-        "description": "The aw-skills deployment this connector talks to. Only change this to point at a different aw-skills instance \u2014 the default is the one, shared skills.aw deployment (its own port is :10016; this is the public hostname in front of it)."
+        "description": "Reached by container NAME on aw-stack-net, never an IP or the public hostname — same pattern as the Knowledgeable Connector's own base_url. This resolves because aw-skills' docker-compose.yml joins aw-stack-net with container_name: aw-skills. Only change this to point at a different aw-skills deployment."
       },
       "identity_token": {
         "type": "string",

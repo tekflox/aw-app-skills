@@ -19,7 +19,7 @@
       "widgets": [
         {
           "type": "markdown",
-          "value": "### Setup\n`base_url` is a plain config field, editable from this app's own Settings gear — defaults to the public `https://skills.aw.tekflox.com`. Only change it to point this connector at a different aw-skills deployment.\n\nThere is no secret to configure: this app mints and refreshes its own per-workspace identity token against aw-backend (`identity_token.py`) on an hourly watchdog tick."
+          "value": "### Setup\n`base_url` is a plain config field, editable from this app's own Settings gear — defaults to `http://aw-skills:10016`, a container **name** on `aw-stack-net` (same pattern as the Knowledgeable Connector), not the public hostname. Only change it to point this connector at a different aw-skills deployment.\n\nThere is no secret to configure: this app mints and refreshes its own per-workspace identity token against aw-backend (`identity_token.py`) on an hourly watchdog tick."
         }
       ]
     },

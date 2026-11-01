@@ -25,7 +25,7 @@ from typing import Callable
 
 import httpx
 
-DEFAULT_BASE_URL = "https://skills.aw.tekflox.com"
+DEFAULT_BASE_URL = "http://aw-skills:10016"
 
 _base_url_resolver: Callable[[], str] = lambda: DEFAULT_BASE_URL
 _token_resolver: Callable[[], str] = lambda: ""
