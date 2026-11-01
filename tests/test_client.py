@@ -158,19 +158,23 @@ def test_create_skill_rejects_bad_visibility():
 
 def test_create_skill_defaults_visibility_to_private():
     patcher, calls = _patched_client(_mock_resp(201, {"slug": "foo"}))
-    with patcher:
+    with patch("skills_app.client.workspace_env", return_value="aw"), patcher:
         asyncio.run(client.create_skill({"name": "foo", "description": "d", "content": "c"}))
     method, url, body, headers = calls[0]
     assert method == "POST"
     assert url == "http://skills.test/api/skills"
-    assert body == {"slug": "foo", "description": "d", "content": "c", "visibility": "private"}
+    assert body == {
+        "slug": "foo", "description": "d", "content": "c",
+        "visibility": "private", "tenant_slug": "aw",
+    }
 
 
-def test_create_skill_honours_explicit_public_visibility():
+def test_create_skill_honours_explicit_public_visibility_and_omits_tenant_slug():
     patcher, calls = _patched_client(_mock_resp(201, {"slug": "foo"}))
     with patcher:
         asyncio.run(client.create_skill({"name": "foo", "content": "c", "visibility": "public"}))
     assert calls[0][2]["visibility"] == "public"
+    assert "tenant_slug" not in calls[0][2]
 
 
 def test_create_skill_surfaces_conflict_error():

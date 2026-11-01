@@ -13,10 +13,20 @@ Unlike that connector, auth here is a per-workspace identity JWT, not a
 shared secret: aw-skills' own ``core/identity.py`` resolves which
 workspace(s) a caller may read/write from the JWT's ``memberships`` claim,
 never from a header this client sets. Holding a valid token for this
-workspace is the whole access-control story on this side; `create_skill`
-with no explicit tenant defaults to this workspace because the minted
-token carries exactly one membership (``backend/app/api/skills.py``'s
-``_resolve_write_tenant``).
+workspace is the whole access-control story on this side.
+
+**`create_skill` always sends `tenant_slug` explicitly for a private
+skill** — measured live against aw-skills 2026-11-01:
+``backend/app/api/skills.py``'s ``_assert_visibility_shape`` rejects
+``visibility='private'`` with no ``tenant_slug`` in the request body
+*before* ``_resolve_write_tenant`` ever gets a chance to default an
+omitted one to the caller's single membership, so that documented
+single-membership default is unreachable from this client regardless of
+how many workspaces the token's `memberships` claim carries. Supplying it
+ourselves from ``AW_WORKSPACE`` (the same env var ``identity_token.py``
+already reads to mint that very token) sidesteps the gap without
+duplicating any of aw-skills' own tenant-resolution logic — it is one
+caller-known value, not a rule this client re-implements.
 """
 from __future__ import annotations
 
@@ -24,6 +34,8 @@ import json
 from typing import Callable
 
 import httpx
+
+from .workspace_env import workspace_env
 
 DEFAULT_BASE_URL = "http://aw-skills:10016"
 
@@ -145,7 +157,11 @@ async def load_skill(args: dict) -> tuple[str, bool]:
 async def create_skill(args: dict) -> tuple[str, bool]:
     """POST /api/skills — ``visibility`` defaults to ``private``: making a
     skill public is an explicit act, because public means its content
-    leaves this workspace (DESIGN.md, this card's own briefing)."""
+    leaves this workspace (DESIGN.md, this card's own briefing).
+
+    A private skill always carries an explicit ``tenant_slug`` (this
+    workspace's own) — see the module docstring for why that cannot be
+    left for the server to default."""
     name = (args.get("name") or "").strip()
     content = args.get("content")
     if not name:
@@ -161,6 +177,8 @@ async def create_skill(args: dict) -> tuple[str, bool]:
         "content": content,
         "visibility": visibility,
     }
+    if visibility == "private":
+        body["tenant_slug"] = workspace_env("AW_WORKSPACE")
     data, err = await _post_json("/api/skills", body)
     if err:
         return f"create_skill failed: {err}", True
