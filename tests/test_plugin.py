@@ -12,7 +12,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from skills_app import client
+from skills_app import client, materializer
 from skills_app.plugin import SkillsAppPlugin
 
 
@@ -22,6 +22,17 @@ def _make_ctx(config=None, has_watchdog=True):
     ctx.config = config or {}
     ctx.has.return_value = has_watchdog
     return ctx
+
+
+def _watchdog_call(ctx, task_id):
+    """Picks one ``ctx.watchdog.register(...)`` call out of the (now two)
+    registered by ``activate()``, by its task-id positional arg — two
+    watchdogs share this mock, so ``call_args`` (the last call) is no
+    longer reliably the identity-token one."""
+    for call in ctx.watchdog.register.call_args_list:
+        if call.args[0] == task_id:
+            return call
+    raise AssertionError(f"no watchdog.register call for task_id={task_id!r}")
 
 
 def test_activate_registers_routes_and_writes_mcp_json():
@@ -71,10 +82,20 @@ def test_watchdog_registered_when_capability_granted():
     with patch("skills_app.identity_token.refresh", return_value=None):
         asyncio.run(SkillsAppPlugin().activate(ctx))
 
-    ctx.watchdog.register.assert_called_once()
-    name, fn, interval = ctx.watchdog.register.call_args.args
-    assert name == "identity-token-refresh"
-    assert ctx.watchdog.register.call_args.kwargs["run_immediately"] is True
+    assert ctx.watchdog.register.call_count == 2
+    call = _watchdog_call(ctx, "identity-token-refresh")
+    assert call.kwargs["run_immediately"] is True
+
+
+def test_materializer_watchdog_registered_when_capability_granted():
+    ctx = _make_ctx(has_watchdog=True)
+
+    with patch("skills_app.identity_token.refresh", return_value=None):
+        asyncio.run(SkillsAppPlugin().activate(ctx))
+
+    call = _watchdog_call(ctx, "skills-materializer")
+    assert call.args[2] == materializer.MATERIALIZER_INTERVAL_S
+    assert call.kwargs["run_immediately"] is True
 
 
 def test_watchdog_not_registered_without_capability():
@@ -93,7 +114,7 @@ def test_watchdog_tick_updates_live_config_on_refresh():
     with patch("skills_app.identity_token.refresh", return_value=None):
         asyncio.run(plugin.activate(ctx))
 
-    _, tick_fn, _ = ctx.watchdog.register.call_args.args
+    _, tick_fn, _ = _watchdog_call(ctx, "identity-token-refresh").args
     with patch("skills_app.identity_token.refresh", return_value="rotated"):
         asyncio.run(tick_fn())
     assert plugin._live_config["identity_token"] == "rotated"
@@ -106,9 +127,30 @@ def test_watchdog_tick_survives_refresh_raising():
     with patch("skills_app.identity_token.refresh", return_value=None):
         asyncio.run(plugin.activate(ctx))
 
-    _, tick_fn, _ = ctx.watchdog.register.call_args.args
+    _, tick_fn, _ = _watchdog_call(ctx, "identity-token-refresh").args
     with patch("skills_app.identity_token.refresh", side_effect=RuntimeError("boom")):
         asyncio.run(tick_fn())  # must not raise
+
+
+def test_materializer_watchdog_tick_survives_sync_tick_raising():
+    ctx = _make_ctx(has_watchdog=True)
+    plugin = SkillsAppPlugin()
+
+    with patch("skills_app.identity_token.refresh", return_value=None):
+        asyncio.run(plugin.activate(ctx))
+
+    _, tick_fn, _ = _watchdog_call(ctx, "skills-materializer").args
+    with patch("skills_app.materializer.sync_tick", side_effect=RuntimeError("boom")):
+        asyncio.run(tick_fn())  # must not raise
+
+
+def test_list_skill_sources_names_the_materialized_dir():
+    ctx = _make_ctx()
+    plugin = SkillsAppPlugin()
+
+    result = asyncio.run(plugin.list_skill_sources(ctx))
+
+    assert result == {"ok": True, "dirs": [str(materializer.materialized_dir())]}
 
 
 def test_on_config_saved_refreshes_live_config():

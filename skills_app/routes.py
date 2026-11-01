@@ -14,7 +14,7 @@ from __future__ import annotations
 from fastapi import Body, FastAPI, Request
 from fastapi.responses import JSONResponse, Response
 
-from . import client
+from . import client, materializer
 
 
 def build_routes() -> FastAPI:
@@ -27,6 +27,12 @@ def build_routes() -> FastAPI:
             "base_url": client.base_url(),
             "tools": [t["name"] for t in client.TOOLS_SCHEMA],
         }
+
+    @app.get("/doctor")
+    async def doctor() -> dict:
+        """``contributes.doctor`` entry — see
+        ``materializer.doctor_report()`` for what counts as drift."""
+        return materializer.doctor_report()
 
     @app.post("/test")
     async def test_connection() -> dict:

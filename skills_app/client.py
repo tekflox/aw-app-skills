@@ -201,6 +201,24 @@ async def update_skill(args: dict) -> tuple[str, bool]:
     return _as_text(data), False
 
 
+async def get_manifest() -> tuple[dict | None, str | None]:
+    """GET /api/sync/manifest — the materializer's feed (Fase 4). Returns
+    the raw ``{state_hash, skills}`` payload rather than a stringified tool
+    reply: this is for ``materializer.sync_tick``, not an MCP tool call."""
+    return await _get("/api/sync/manifest")
+
+
+async def get_content(slug: str, version: int) -> tuple[dict | None, str | None]:
+    """GET /api/skills/{slug}/content?version= for a SPECIFIC version.
+
+    Unlike ``load_skill``'s "omit for latest" tool semantics, the
+    materializer always pins the version the manifest entry named at fetch
+    time — a version bump mid-download must never silently land a newer
+    copy than the one the manifest round this came from actually listed.
+    """
+    return await _get(f"/api/skills/{slug}/content", {"version": version})
+
+
 TOOLS_SCHEMA = [
     {
         "name": "search_skills",

@@ -56,6 +56,12 @@
         "window": "skills.main"
       }
     ],
+    "doctor": [
+      {
+        "label": "Skills materializer",
+        "route": "/doctor"
+      }
+    ],
     "mcp": {
       "reload_on_save": false,
       "provides": [

@@ -19,7 +19,7 @@ import asyncio
 import logging
 import os
 
-from . import client, identity_token, mcp_config
+from . import client, identity_token, materializer, mcp_config
 from . import routes as routes_mod
 
 log = logging.getLogger("aw_apps.skills")
@@ -70,6 +70,7 @@ class SkillsAppPlugin:
         doc = mcp_config.write_mcp_json(ctx.package_dir, port)
 
         self._register_identity_token_watchdog(ctx)
+        self._register_materializer_watchdog(ctx)
 
         log.info(
             "aw-app-skills activated: mcp server=%s, tools=%s, base_url=%s, token=%s",
@@ -101,6 +102,41 @@ class SkillsAppPlugin:
             "identity-token-refresh", _refresh, IDENTITY_TOKEN_INTERVAL_S, run_immediately=True
         )
         log.info("identity_token: watchdog registered (every %.0fs)", IDENTITY_TOKEN_INTERVAL_S)
+
+    def _register_materializer_watchdog(self, ctx) -> None:
+        """Fase 4 of the aw-skills build — pulls skills.aw's manifest into
+        this app's own read-only cache and, on any change, triggers the
+        existing ``agent sync`` fan-out so ``skills/`` and every per-CLI
+        mirror pick it up. See ``materializer.py``'s module docstring for
+        the full mechanism and why it does not reimplement
+        ``materialize()``."""
+        if not ctx.has("watchdog:tasks"):
+            log.warning("materializer: 'watchdog:tasks' capability not granted — "
+                        "skills materializer watchdog not started")
+            return
+
+        async def _tick() -> None:
+            try:
+                result = await materializer.sync_tick()
+            except Exception:  # noqa: BLE001 — a watchdog tick must never raise
+                log.warning("materializer: sync tick failed", exc_info=True)
+                return
+            if result.get("changed") or not result.get("ok"):
+                log.info("materializer: %s", result)
+
+        ctx.watchdog.register(
+            "skills-materializer", _tick, materializer.MATERIALIZER_INTERVAL_S, run_immediately=True
+        )
+        log.info("materializer: watchdog registered (every %.0fs)",
+                  materializer.MATERIALIZER_INTERVAL_S)
+
+    async def list_skill_sources(self, ctx) -> dict:
+        """``src/apps/skill_sources.py``'s pull hook. Names the one
+        directory the materializer watchdog above keeps in sync with
+        skills.aw's manifest; ``materialize()`` re-scans its CONTENTS fresh
+        on every sync, so this only has to point at it once, here, at
+        activation — it does not need to be re-asserted on every tick."""
+        return {"ok": True, "dirs": [str(materializer.materialized_dir())]}
 
     async def on_config_saved(self, ctx) -> None:
         self._refresh_derived_config(ctx)

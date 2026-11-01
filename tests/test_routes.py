@@ -79,3 +79,13 @@ def test_mcp_post_notification_only_returns_202():
     test_client = TestClient(build_routes())
     resp = test_client.post("/mcp", json={"method": "notifications/initialized"})
     assert resp.status_code == 202
+
+
+def test_doctor_reports_materializer_drift():
+    from skills_app import materializer
+
+    with patch.object(materializer, "doctor_report", return_value={"ok": False, "detail": {}}):
+        test_client = TestClient(build_routes())
+        resp = test_client.get("/doctor")
+    assert resp.status_code == 200
+    assert resp.json() == {"ok": False, "detail": {}}
