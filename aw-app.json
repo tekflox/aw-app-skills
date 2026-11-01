@@ -1,0 +1,99 @@
+{
+  "manifest_version": 1,
+  "id": "skills",
+  "name": "Skills Connector",
+  "version": "0.1.0",
+  "description": "MCP connector for skills.aw (fredericowu/aw-skills), the standalone skill registry service — search, load, create and update versioned skills over its REST API. Install it and any agent on this workspace can read and write skills that live in that registry (public or private to this workspace) instead of only the ones in this workspace's own local tree.",
+  "icon": "book-open",
+  "tier": "inprocess",
+  "requires_ui_refresh": true,
+  "category": "Integrations",
+  "publisher": "TekFlox",
+  "resource_estimate": {
+    "cpu": "low",
+    "memory": "low",
+    "disk": "low"
+  },
+  "runtime": {
+    "python": ">=3.11",
+    "entrypoint": "skills_app.plugin:SkillsAppPlugin",
+    "pip_requires": [
+      "httpx>=0.24"
+    ]
+  },
+  "permissions": [
+    "routes:register",
+    "net:outbound",
+    "watchdog:tasks"
+  ],
+  "contributes": {
+    "routes": [
+      {
+        "prefix": "/api/apps/skills"
+      }
+    ],
+    "skills": [
+      {
+        "id": "aw-app-skills",
+        "path": "skills/aw-app-skills/SKILL.md",
+        "description": "How to use the 4 MCP tools this app exposes for skills.aw (search_skills, load_skill, create_skill, update_skill) — and how they differ from the kb app's same-named tools."
+      }
+    ],
+    "windows": [
+      {
+        "id": "skills.main",
+        "title": "Skills Connector",
+        "icon": "book-open",
+        "body": {
+          "type": "declarative",
+          "spec": "windows/main.json"
+        }
+      }
+    ],
+    "settings_panels": [
+      {
+        "id": "skills.settings",
+        "window": "skills.main"
+      }
+    ],
+    "mcp": {
+      "reload_on_save": false,
+      "provides": [
+        "search_skills",
+        "load_skill",
+        "create_skill",
+        "update_skill"
+      ]
+    }
+  },
+  "config_schema": {
+    "type": "object",
+    "properties": {
+      "base_url": {
+        "type": "string",
+        "default": "https://skills.aw.tekflox.com",
+        "title": "skills.aw base URL",
+        "description": "The aw-skills deployment this connector talks to. Only change this to point at a different aw-skills instance — the default is the one, shared skills.aw deployment (its own port is :10016; this is the public hostname in front of it)."
+      },
+      "identity_token": {
+        "type": "string",
+        "x-secret": true,
+        "default": "",
+        "title": "Identity token (auto-managed)",
+        "description": "A per-workspace identity JWT this connector mints and refreshes against aw-backend itself (identity_token.py) — there is nothing to paste here. Shown only because it is stored like any other config value; editing it by hand is pointless, the next watchdog tick (hourly) overwrites it once it is within half its lifetime of expiring."
+      }
+    },
+    "required": []
+  },
+  "dependencies": {
+    "apps": [
+      {
+        "id": "mcp-gateway",
+        "version": ">=0.1.0",
+        "required": true,
+        "reason": "This app contributes an mcp.json entry (the 'skills' server) that MCP Gateway discovers and merges; without the gateway no agent can reach its tools."
+      }
+    ]
+  },
+  "migrations": {}
+}

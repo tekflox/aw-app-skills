@@ -1,0 +1,50 @@
+{
+  "layout": "stack",
+  "regions": [
+    {
+      "id": "status",
+      "widgets": [
+        { "type": "markdown", "value": "## Skills Connector" },
+        {
+          "type": "auth_status",
+          "bind": "GET /api/apps/skills/status",
+          "loading_text": "Checking identity token…",
+          "logged_in_text": "4 tools live on aw-gateway as aw__skills__* against {base_url}.",
+          "logged_out_text": "No identity token yet — this connector mints and refreshes its own against aw-backend, nothing to paste here. If this persists, check this app's log for 'identity_token:'."
+        }
+      ]
+    },
+    {
+      "id": "setup",
+      "widgets": [
+        {
+          "type": "markdown",
+          "value": "### Setup\n`base_url` is a plain config field, editable from this app's own Settings gear — defaults to the public `https://skills.aw.tekflox.com`. Only change it to point this connector at a different aw-skills deployment.\n\nThere is no secret to configure: this app mints and refreshes its own per-workspace identity token against aw-backend (`identity_token.py`) on an hourly watchdog tick."
+        }
+      ]
+    },
+    {
+      "id": "duplication",
+      "widgets": [
+        {
+          "type": "markdown",
+          "value": "### Known duplication (temporary)\nThe `kb` app also exposes `search_skills`/`load_skill` (gateway-prefixed `aw__kb__*`), reading this workspace's local `skills/` tree — a different, filesystem-backed index from skills.aw's own content-owning registry these `aw__skills__*` tools talk to. Both pairs work today; deprecating the `kb` app's pair is a later phase of the aw-skills build, not this one. See this repo's README."
+        }
+      ]
+    },
+    {
+      "id": "verify",
+      "widgets": [
+        {
+          "type": "markdown",
+          "value": "### Verify\nCalls `search_skills` for real against the configured skills.aw instance."
+        },
+        {
+          "type": "button",
+          "label": "Test the connection",
+          "action": { "call": "POST /api/apps/skills/test" }
+        }
+      ]
+    }
+  ]
+}
