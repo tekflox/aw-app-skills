@@ -58,3 +58,5 @@ python3 -m venv .venv && . .venv/bin/activate
 pip install -e ".[dev]"
 pytest tests/ -q
 ```
+
+<!-- devteam: follow-up no-op PR proving the comment/workflow_run review paths (fleet migration B3) -->
