@@ -2,7 +2,7 @@
   "manifest_version": 1,
   "id": "skills",
   "name": "Skills Connector",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "MCP connector for skills.aw (fredericowu/aw-skills), the standalone skill registry service \u2014 search, load, create and update versioned skills over its REST API. Install it and any agent on this workspace can read and write skills that live in that registry (public or private to this workspace) instead of only the ones in this workspace's own local tree.",
   "icon": "book-open",
   "tier": "inprocess",
